@@ -16,13 +16,13 @@
         <div class="flex items-center justify-between border-b pb-4 mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-indigo-700">📖 Từ điển Tra Cứu Thuốc BVTV</h1>
-                <p class="text-sm text-gray-500 mt-1">Tra cứu nhanh 4 cột thông tin (Tên thuốc, Hoạt chất, Phân nhóm, Công ty)</p>
+                <p class="text-sm text-gray-500 mt-1">Tra cứu nhanh thông tin sản phẩm</p>
             </div>
-            <a href="index.html" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-700 transition">🛒 Quay lại quầy bán hàng</a>
+            <a href="index.html" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-700 transition">🛒 Quay lại quầy bán hàng</a>
         </div>
 
         <div class="mb-6 relative">
-            <input type="text" id="searchDict" class="w-full border-2 border-indigo-200 p-4 rounded-xl text-lg focus:outline-none focus:border-indigo-600" placeholder="🔍 Đang tải từ điển... Gõ tên thuốc, hoạt chất, phân nhóm hoặc công ty để tra cứu..." disabled>
+            <input type="text" id="searchDict" class="w-full border-2 border-indigo-200 p-4 rounded-xl text-lg focus:outline-none focus:border-indigo-600" placeholder="🔍 Gõ tên thuốc, hoạt chất, phân nhóm hoặc công ty để tra cứu..." disabled>
             <div class="absolute right-4 top-5 text-gray-400 text-sm" id="resultCount"></div>
         </div>
 
@@ -42,13 +42,12 @@
             </table>
         </div>
         
-        <div class="mt-4 text-xs text-gray-400 text-right">Hệ thống tra cứu thông tin BVTV (Mã xác nhận: 1303)</div>
+        <div class="mt-4 text-xs text-gray-400 text-right">Mật khẩu xác nhận: 1303</div>
     </div>
 
     <script>
         let masterDictionary = [];
 
-        // Tự động đọc file data.json khi trang được mở
         async function loadDictionary() {
             try {
                 const response = await fetch('data.json');
@@ -57,11 +56,10 @@
                 
                 const searchInput = document.getElementById('searchDict');
                 searchInput.disabled = false;
-                searchInput.placeholder = "🔍 Gõ tên thuốc, hoạt chất, phân nhóm hoặc công ty để tra cứu...";
                 document.getElementById('dictTableBody').innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400">Nhập từ khóa (tối thiểu 2 ký tự) để bắt đầu tra cứu.</td></tr>`;
             } catch (error) {
                 console.error(error);
-                document.getElementById('dictTableBody').innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">❌ Lỗi tải file dữ liệu 'data.json'. Vui lòng kiểm tra lại file đã đặt cùng thư mục chưa!</td></tr>`;
+                document.getElementById('dictTableBody').innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">❌ Lỗi tải file dữ liệu 'data.json'.</td></tr>`;
             }
         }
 
@@ -78,25 +76,25 @@
                 return;
             }
 
-            // Lọc kết quả tìm kiếm, giới hạn tối đa 50 kết quả hiển thị cho mượt mà
+            // Dùng đúng key trong json của sếp: "Tên thuốc", "Hoạt chất", "Phân nhóm", "Công ty"
             const matches = masterDictionary.filter(item => 
-                (item.ten && item.ten.toLowerCase().includes(keyword)) || 
-                (item.hoatchat && item.hoatchat.toLowerCase().includes(keyword)) || 
-                (item.nhom && item.nhom.toLowerCase().includes(keyword)) || 
-                (item.congty && item.congty.toLowerCase().includes(keyword))
+                (item["Tên thuốc"] && item["Tên thuốc"].toLowerCase().includes(keyword)) || 
+                (item["Hoạt chất"] && item["Hoạt chất"].toLowerCase().includes(keyword)) || 
+                (item["Phân nhóm"] && item["Phân nhóm"].toLowerCase().includes(keyword)) || 
+                (item["Công ty"] && item["Công ty"].toLowerCase().includes(keyword))
             ).slice(0, 50);
 
             tbody.innerHTML = "";
             
             if (matches.length > 0) {
-                resultCount.innerText = `Tìm thấy ${matches.length} kết quả (Hiển thị 50 dòng)`;
+                resultCount.innerText = `Tìm thấy ${matches.length} kết quả`;
                 matches.forEach(item => {
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 border-b transition">
-                            <td class="p-4 font-bold text-indigo-700">${item.ten || ''}</td>
-                            <td class="p-4 text-gray-600">${item.hoatchat || ''}</td>
-                            <td class="p-4 text-gray-700">${item.nhom || ''}</td>
-                            <td class="p-4 font-semibold text-blue-600">${item.congty || ''}</td>
+                            <td class="p-4 font-bold text-indigo-700">${item["Tên thuốc"] || ''}</td>
+                            <td class="p-4 text-gray-600">${item["Hoạt chất"] || ''}</td>
+                            <td class="p-4 text-gray-700">${item["Phân nhóm"] || ''}</td>
+                            <td class="p-4 font-semibold text-blue-600">${item["Công ty"] || ''}</td>
                         </tr>
                     `;
                 });
@@ -106,7 +104,6 @@
             }
         });
 
-        // Chạy tải dữ liệu từ điển
         loadDictionary();
     </script>
 </body>
