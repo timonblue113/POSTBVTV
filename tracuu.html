@@ -22,8 +22,8 @@
         </div>
 
         <div class="mb-6 relative">
-            <input type="text" id="searchDict" class="w-full border-2 border-indigo-200 p-4 rounded-xl text-lg focus:outline-none focus:border-indigo-600" placeholder="🔍 Gõ tên thuốc, hoạt chất, phân nhóm hoặc công ty để tra cứu...">
-            <div class="absolute right-4 top-5 text-gray-400 text-sm" id="resultCount">Gõ từ khóa để bắt đầu tìm kiếm...</div>
+            <input type="text" id="searchDict" class="w-full border-2 border-indigo-200 p-4 rounded-xl text-lg focus:outline-none focus:border-indigo-600" placeholder="🔍 Đang tải từ điển... Gõ tên thuốc, hoạt chất, phân nhóm hoặc công ty để tra cứu..." disabled>
+            <div class="absolute right-4 top-5 text-gray-400 text-sm" id="resultCount"></div>
         </div>
 
         <div class="overflow-y-auto custom-scrollbar border rounded-xl max-h-[500px]">
@@ -37,27 +37,33 @@
                     </tr>
                 </thead>
                 <tbody id="dictTableBody" class="text-sm">
-                    <tr><td colspan="4" class="p-8 text-center text-gray-400">Hãy nhập ít nhất 2 ký tự để tra cứu dữ liệu.</td></tr>
+                    <tr><td colspan="4" class="p-8 text-center text-gray-400">Đang nạp dữ liệu từ điển, vui lòng chờ giây lát...</td></tr>
                 </tbody>
             </table>
         </div>
         
-        <div class="mt-4 text-xs text-gray-400 text-right">Hệ thống hỗ trợ tra cứu dữ liệu chuyên nghiệp (Mã xác thực: 1303)</div>
+        <div class="mt-4 text-xs text-gray-400 text-right">Hệ thống tra cứu thông tin BVTV (Mã xác nhận: 1303)</div>
     </div>
 
     <script>
-        // Mẫu dữ liệu từ điển 7k mã (Bạn có thể thay thế hoặc nạp từ file JSON qua fetch ở đây)
-        const masterDictionary = [
-            { ten: "Tilt Super 300EC", hoatchat: "Propiconazole + Difenoconazole", nhom: "Trừ bệnh", congty: "Syngenta" },
-            { ten: "Amistar Top 325SC", hoatchat: "Azoxystrobin + Difenoconazole", nhom: "Trừ bệnh", congty: "Syngenta" },
-            { ten: "Actara 25WG", hoatchat: "Thiamethoxam", nhom: "Trừ rầy/sâu", congty: "Syngenta" },
-            { ten: "Envidor 240SC", hoatchat: "Spirodiclofen", nhom: "Trừ nhện", congty: "Bayer" },
-            { ten: "Confidor 100SL", hoatchat: "Imidacloprid", nhom: "Trừ rầy", congty: "Bayer" },
-            { ten: "Bumper 250EC", hoatchat: "Propiconazole", nhom: "Trừ bệnh", congty: "Adama" },
-            { ten: "Anvil 5SC", hoatchat: "Hexaconazole", nhom: "Trừ bệnh", congty: "Syngenta" },
-            { ten: "Nativo 750WG", hoatchat: "Tebuconazole + Trifloxystrobin", nhom: "Trừ bệnh", congty: "Bayer" }
-            // Sếp có thể bổ sung 7000 mã vào mảng này hoặc dùng fetch lấy từ file json rời
-        ];
+        let masterDictionary = [];
+
+        // Tự động đọc file data.json khi trang được mở
+        async function loadDictionary() {
+            try {
+                const response = await fetch('data.json');
+                if (!response.ok) throw new Error('Không tải được file từ điển!');
+                masterDictionary = await response.json();
+                
+                const searchInput = document.getElementById('searchDict');
+                searchInput.disabled = false;
+                searchInput.placeholder = "🔍 Gõ tên thuốc, hoạt chất, phân nhóm hoặc công ty để tra cứu...";
+                document.getElementById('dictTableBody').innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400">Nhập từ khóa (tối thiểu 2 ký tự) để bắt đầu tra cứu.</td></tr>`;
+            } catch (error) {
+                console.error(error);
+                document.getElementById('dictTableBody').innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">❌ Lỗi tải file dữ liệu 'data.json'. Vui lòng kiểm tra lại file đã đặt cùng thư mục chưa!</td></tr>`;
+            }
+        }
 
         const searchInput = document.getElementById('searchDict');
         const tbody = document.getElementById('dictTableBody');
@@ -67,30 +73,30 @@
             const keyword = this.value.trim().toLowerCase();
             
             if (keyword.length < 2) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400">Hãy nhập ít nhất 2 ký tự để tra cứu dữ liệu.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400">Nhập từ khóa (tối thiểu 2 ký tự) để bắt đầu tra cứu.</td></tr>`;
                 resultCount.innerText = "";
                 return;
             }
 
-            // Lọc kết quả tìm kiếm theo 4 trường, tối đa 50 kết quả để trang load siêu mượt
+            // Lọc kết quả tìm kiếm, giới hạn tối đa 50 kết quả hiển thị cho mượt mà
             const matches = masterDictionary.filter(item => 
-                item.ten.toLowerCase().includes(keyword) || 
-                item.hoatchat.toLowerCase().includes(keyword) || 
-                item.nhom.toLowerCase().includes(keyword) || 
-                item.congty.toLowerCase().includes(keyword)
+                (item.ten && item.ten.toLowerCase().includes(keyword)) || 
+                (item.hoatchat && item.hoatchat.toLowerCase().includes(keyword)) || 
+                (item.nhom && item.nhom.toLowerCase().includes(keyword)) || 
+                (item.congty && item.congty.toLowerCase().includes(keyword))
             ).slice(0, 50);
 
             tbody.innerHTML = "";
             
             if (matches.length > 0) {
-                resultCount.innerText = `Tìm thấy ${matches.keys.length ? '' : matches.length} kết quả`; // Đã gỡ lỗi nhỏ
+                resultCount.innerText = `Tìm thấy ${matches.length} kết quả (Hiển thị 50 dòng)`;
                 matches.forEach(item => {
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 border-b transition">
-                            <td class="p-4 font-bold text-indigo-700">${item.ten}</td>
-                            <td class="p-4 text-gray-600">${item.hoatchat}</td>
-                            <td class="p-4 text-gray-700">${item.nhom}</td>
-                            <td class="p-4 font-semibold text-blue-600">${item.congty}</td>
+                            <td class="p-4 font-bold text-indigo-700">${item.ten || ''}</td>
+                            <td class="p-4 text-gray-600">${item.hoatchat || ''}</td>
+                            <td class="p-4 text-gray-700">${item.nhom || ''}</td>
+                            <td class="p-4 font-semibold text-blue-600">${item.congty || ''}</td>
                         </tr>
                     `;
                 });
@@ -99,6 +105,9 @@
                 resultCount.innerText = "0 kết quả";
             }
         });
+
+        // Chạy tải dữ liệu từ điển
+        loadDictionary();
     </script>
 </body>
 </html>
